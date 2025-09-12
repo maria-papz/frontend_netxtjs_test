@@ -77,7 +77,7 @@ export default function MainHeader() {
             />
             <div className="flex flex-col">
               <span className="text-lg font-bold tracking-tight">KOE Insights Lab</span>
-              <span className="text-xs text-muted-foreground">Database for CyERC</span>
+              <span className="text-xs text-muted-foreground">Database for CypERC</span>
             </div>
           </Link>
         </div>
