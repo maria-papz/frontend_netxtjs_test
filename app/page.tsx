@@ -4,12 +4,19 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import {  Sixtyfour } from 'next/font/google';
 import { useInView } from "framer-motion";
 import { useRef } from "react";
 import { useAppSelector } from '@/redux/hooks';
 import useVerify from '@/hooks/use-verify';
 import { redirect } from 'next/navigation';
 import { ThemeToggle } from '@/components/theme-toggle';
+
+const sixty_four = Sixtyfour({
+  weight: '400',
+  subsets: ['latin'],
+  display: 'swap',
+});
 import {
   Database,
   BarChart3,
@@ -316,14 +323,14 @@ function ScrollingContent() {
 			>
 				<div className="container mx-auto px-8">
 					<div className="max-w-4xl mx-auto text-center">
-						<motion.h1
-							className="text-3xl md:text-4xl font-bold mb-6 text-foreground"
-							initial={{ y: 30, opacity: 0 }}
-							animate={{ y: 0, opacity: 1 }}
-							transition={{ duration: 0.8, delay: 0.2 }}
-						>
-							KOE Insights Lab
-						</motion.h1>
+            <motion.h1
+              className={`text-3xl md:text-4xl font-bold mb-6 bg-gradient-to-r from-secondary to-secondary/50 text-transparent bg-clip-text ${sixty_four.className}`}
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
+              KOE Insights Lab
+            </motion.h1>
 
 						<motion.p
 							className="text-base text-muted-foreground mb-8 leading-relaxed max-w-2xl mx-auto"
@@ -356,7 +363,7 @@ function ScrollingContent() {
 
 						{/* Feature preview hint */}
 						<motion.div
-							className="text-center space-y-4"
+							className="text-center space-y-4 mb-16 sm:mb-0"
 							initial={{ y: 20, opacity: 0 }}
 							animate={{ y: 0, opacity: 1 }}
 							transition={{ duration: 0.8, delay: 0.8 }}
