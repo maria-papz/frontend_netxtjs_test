@@ -303,6 +303,19 @@ const EditIndicatorForm: React.FC<CreateIndicatorFormProps> = ({
             />
             <FormField
               control={form.control}
+              name="source"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Source</FormLabel>
+                  <FormControl>
+                    <Input {...field} defaultValue={description || ""} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="category"
               render={({ field }) => (
                 <FormItem>
@@ -460,24 +473,30 @@ const EditIndicatorForm: React.FC<CreateIndicatorFormProps> = ({
                   <div className="flex items-center space-x-2">
                     <Select
                       onValueChange={(value) => {
-                        field.onChange(value);
-                        setCountry(value);
+                        // Extract the country name from the unique value format: index|||name|||code
+                        const parts = value.split('|||');
+                        const countryName = parts[1];
+                        field.onChange(countryName);
+                        setCountry(countryName);
                         }}
-                        defaultValue={country || undefined}
+                        defaultValue={country ? `${(countries as CountryItem[]).findIndex(c => c.name === country)}|||${country}|||${(countries as CountryItem[]).find(c => c.name === country)?.code || ''}` : undefined}
                       >
                       <SelectTrigger>
                         <SelectValue placeholder="Select a country" />
                       </SelectTrigger>
                       <SelectContent>
-                        {(countries as CountryItem[]).map((country) => (
-                          <SelectItem
-                            key={country.name}
-                            value={country.name}
-                            title={country.code ? `Code: ${country.code}` : ""}
-                          >
-                            {country.name}
-                          </SelectItem>
-                        ))}
+                        {(countries as CountryItem[]).map((country, index) => {
+                          const uniqueId = `${index}|||${country.name}|||${country.code || ''}`;
+                          return (
+                            <SelectItem
+                              key={uniqueId}
+                              value={uniqueId}
+                              title={country.code ? `Code: ${country.code}` : ""}
+                            >
+                              {country.name}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                     <DialogCountries

@@ -44,7 +44,7 @@ export function DialogCountries({ onCountryAdded }: DialogCountriesProps) {
 
     const countrySchema = z.object({
       name: z.string().min(1, "Name is required"),
-      regions: z.array(z.number()).optional(),
+      regions: z.array(z.number()).default([]),
       code: z.string().refine((val) => !codes.includes(val), {
         message: "Code must be unique",
       }),
@@ -52,11 +52,19 @@ export function DialogCountries({ onCountryAdded }: DialogCountriesProps) {
 
     const form = useForm<z.infer<typeof countrySchema>>({
       resolver: zodResolver(countrySchema),
+      defaultValues: {
+        regions: []
+      }
     });
 
     const handleSubmit = async (data: z.infer<typeof countrySchema>) => {
       try {
-        const response = await createCountry(data).unwrap();
+        const countryData = {
+          name: data.name,
+          code: data.code,
+          regions: Array.isArray(data.regions) ? data.regions : [] // Ensure regions is always an array
+        };
+        const response = await createCountry(countryData).unwrap();
         onCountryAdded({ id: response.id, name: data.name, code: data.code });
         toast({
           title: `Country Created Successfully!`,

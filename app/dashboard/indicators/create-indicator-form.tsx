@@ -76,7 +76,7 @@ const CreateIndicatorForm = ({codes, afterSubmit, isCustom = false, fixedFrequen
       "CUSTOM",
     ]).default("QUARTERLY"),
     other_frequency: z.string().optional(),
-    seasonallyAdjusted: z.string().default("false"),
+    seasonally_adjusted: z.string().default("false"),
     baseYear: z.string().refine((val) => {
       if (val === "") return true;
       const year = Number(val);
@@ -147,13 +147,13 @@ const CreateIndicatorForm = ({codes, afterSubmit, isCustom = false, fixedFrequen
         description: data.description,
         source: data.source,
         frequency: normalizedFrequency,
-        seasonally_adjusted: data.seasonallyAdjusted === "true",
+        seasonally_adjusted: data.seasonally_adjusted,
         base_year: data.baseYear ? parseFloat(data.baseYear) : undefined,
         is_custom: custom_indicator,
         country: data.country ? parseInt(data.country) : undefined,
         region: data.region ? parseInt(data.region) : undefined,
         category: parseInt(data.category),
-        current_prices: data.currentPrices === "true",
+        current_prices: data.currentPrices,
         unit: data.unit ? parseInt(data.unit) : undefined,
         access_level: data.access_level,
         other_frequency: data.other_frequency,
@@ -211,6 +211,19 @@ const CreateIndicatorForm = ({codes, afterSubmit, isCustom = false, fixedFrequen
             render={({ field }) => (
           <FormItem>
             <FormLabel>Code</FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+            )}
+          />
+           <FormField
+            control={form.control}
+            name="source"
+            render={({ field }) => (
+          <FormItem>
+            <FormLabel>Source</FormLabel>
             <FormControl>
               <Input {...field} />
             </FormControl>
@@ -489,7 +502,7 @@ const CreateIndicatorForm = ({codes, afterSubmit, isCustom = false, fixedFrequen
             )}
             <FormField
             control={form.control}
-            name="seasonallyAdjusted"
+            name="seasonally_adjusted"
             render={({ field }) => (
           <FormItem>
             <FormLabel>Seasonally Adjusted</FormLabel>
