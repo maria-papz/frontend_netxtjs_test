@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -46,31 +46,41 @@ export default function WorkflowIndicatorMapping({
   const [formInitialized, setFormInitialized] = useState<boolean>(false);
 
   const { data_structure, indicators, indicator_mappings } = workflowData;
-  console.log("Workflow Data:", workflowData);
-  const dataVariables = data_structure?.variables || [];
+  const dataVariables = useMemo(() => data_structure?.variables || [], [data_structure]);
 
   // Log the data we're working with
   useEffect(() => {
     if (isEditing) {
-      console.log("Editing workflow with indicator mappings:", indicator_mappings);
-      console.log("Indicators available:", indicators);
+      // Removed debug logs
     }
   }, [isEditing, indicator_mappings, indicators]);
+
+  // Helper function to create safe field keys from variable codes
+  const createSafeFieldKey = (code: string): string => {
+    return code.replace(/[^a-zA-Z0-9]/g, '_');
+  };
+
+  // Create a mapping from safe keys back to original codes
+  const safeKeyToCodeMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    dataVariables.forEach(variable => {
+      const safeKey = createSafeFieldKey(variable.code);
+      map[safeKey] = variable.code;
+    });
+    return map;
+  }, [dataVariables]);
 
   // Filter out time-based variables (QUARTER, MONTH, YEAR)
   const mappableVariables = dataVariables.filter(
     (variable: DataVariable) => !['QUARTER', 'MONTH', 'YEAR'].includes(variable.code)
   );
 
-  // Define the form schema type
-  const indicatorSchema = z.object({
-    id: z.number(),
-    name: z.string(),
-    mappings: z.record(z.string())
-  });
-
   const formSchema = z.object({
-    indicators: z.array(indicatorSchema)
+    indicators: z.array(z.object({
+      id: z.number(),
+      name: z.string(),
+      mappings: z.record(z.string()) // This will now use safe keys
+    }))
   });
 
   type FormValues = z.infer<typeof formSchema>;
@@ -96,22 +106,21 @@ export default function WorkflowIndicatorMapping({
         indicator_mappings.length > 0 &&
         mappableVariables.length > 0) {
 
-      console.log("Initializing form with existing mappings:", indicator_mappings);
-
       const existingMappings = indicator_mappings.map((mapping: IndicatorMapping) => {
         // Find the corresponding indicator in the indicators array
         const matchedIndicator = indicators?.find(
           (ind: Indicator) => ind.id === mapping.indicator_id
         );
 
-        // Create a mappings object from the key_indices
+        // Create a mappings object from the key_indices using safe keys
         const mappings: Record<string, string> = {};
 
         // For each mappable variable, extract the value from key_indices
         mappableVariables.forEach((variable: DataVariable) => {
           const code = variable.code;
+          const safeKey = createSafeFieldKey(code);
           // Use the mapping's key_indices or empty string as fallback
-          mappings[code] = mapping.key_indices?.[code] || "";
+          mappings[safeKey] = mapping.key_indices?.[code] || "";
         });
 
         return {
@@ -120,8 +129,6 @@ export default function WorkflowIndicatorMapping({
           mappings
         };
       });
-
-      console.log("Setting form with mappings:", existingMappings);
 
       if (existingMappings.length > 0) {
         reset({ indicators: existingMappings });
@@ -137,13 +144,12 @@ export default function WorkflowIndicatorMapping({
         indicators.length > 0 &&
         (!indicator_mappings || indicator_mappings.length === 0)) {
 
-      console.log("Setting initial form with available indicators:", indicators);
-
       const initialIndicators = indicators.map((indicator: Indicator) => ({
         id: indicator.id,
         name: indicator.name,
         mappings: mappableVariables.reduce((acc: Record<string, string>, variable: DataVariable) => {
-          acc[variable.code] = "";
+          const safeKey = createSafeFieldKey(variable.code);
+          acc[safeKey] = "";
           return acc;
         }, {})
       }));
@@ -167,7 +173,8 @@ export default function WorkflowIndicatorMapping({
           id: indicator.id,
           name: indicator.name,
           mappings: mappableVariables.reduce((acc: Record<string, string>, variable: DataVariable) => {
-            acc[variable.code] = "";
+            const safeKey = createSafeFieldKey(variable.code);
+            acc[safeKey] = "";
             return acc;
           }, {})
         });
@@ -189,10 +196,13 @@ export default function WorkflowIndicatorMapping({
 
       mappableVariables.forEach((variable: DataVariable) => {
         const code = variable.code;
-        const fieldValue = values.indicators[indicatorIndex]?.mappings?.[code];
+        const safeKey = createSafeFieldKey(code);
+        const fieldValue = values.indicators[indicatorIndex]?.mappings?.[safeKey];
 
         // Check for empty string, null, undefined, or whitespace-only values
-        if (!fieldValue || fieldValue.trim() === '') {
+        // Also check if the value is exactly "0" (string), which is a valid selection
+        if (fieldValue === null || fieldValue === undefined ||
+            (typeof fieldValue === 'string' && fieldValue.trim() === '' && fieldValue !== '0')) {
           indicatorErrors.push(variable.code);
         }
       });
@@ -253,9 +263,11 @@ export default function WorkflowIndicatorMapping({
 
     const values = form.getValues();
     const indicatorMappings: IndicatorMappingPayload[] = values.indicators.map((indicator) => {
-      const codeMappings: CodeMapping[] = Object.entries(indicator.mappings).map(([code, value]) => {
+      const codeMappings: CodeMapping[] = Object.entries(indicator.mappings).map(([safeKey, value]) => {
+        // Convert safe key back to original code
+        const originalCode = safeKeyToCodeMap[safeKey];
         return {
-          code,
+          code: originalCode,
           value // We use the index value from the form
         };
       });
@@ -382,14 +394,17 @@ export default function WorkflowIndicatorMapping({
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
-                        {mappableVariables.map((variable: DataVariable) => (
-                          <FormField
-                            key={variable.code}
-                            control={control}
-                            name={`indicators.${index}.mappings.${variable.code}`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{variable.text || variable.code}</FormLabel>
+                        {mappableVariables.map((variable: DataVariable) => {
+                          const safeKey = createSafeFieldKey(variable.code);
+                          return (
+                            <FormField
+                              key={variable.code}
+                              control={control}
+                              name={`indicators.${index}.mappings.${safeKey}`}
+                              render={({ field }) => {
+                                return (
+                                  <FormItem>
+                                    <FormLabel>{variable.text || variable.code}</FormLabel>
                                 <Select
                                   onValueChange={field.onChange}
                                   value={field.value}
@@ -419,9 +434,11 @@ export default function WorkflowIndicatorMapping({
                                 </FormDescription>
                                 <FormMessage />
                               </FormItem>
-                            )}
-                          />
-                        ))}
+                            );
+                          }}
+                        />
+                        );
+                        })}
                       </div>
                     </CardContent>
                   </Card>
