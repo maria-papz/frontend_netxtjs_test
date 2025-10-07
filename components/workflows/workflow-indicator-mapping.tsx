@@ -189,15 +189,16 @@ export default function WorkflowIndicatorMapping({
 
       mappableVariables.forEach((variable: DataVariable) => {
         const code = variable.code;
-        const fieldValue = values.indicators[indicatorIndex]?.mappings?.[code] || '';
+        const fieldValue = values.indicators[indicatorIndex]?.mappings?.[code];
 
-        if (!fieldValue) {
+        // Check for empty string, null, undefined, or whitespace-only values
+        if (!fieldValue || fieldValue.trim() === '') {
           indicatorErrors.push(variable.code);
         }
       });
 
       if (indicatorErrors.length > 0) {
-        errors[indicatorIndex] = indicatorErrors;
+        errors[indicatorIndex.toString()] = indicatorErrors;
       }
     });
 
@@ -233,6 +234,9 @@ export default function WorkflowIndicatorMapping({
   };
 
   const onSubmit = async () => {
+    // Clear existing form errors first
+    setFormErrors({});
+
     // Final validation for all fields
     const errors = validateAllFieldsHaveValues();
 
