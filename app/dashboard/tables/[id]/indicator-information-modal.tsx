@@ -59,19 +59,15 @@ const IndicatorInformationModal: React.FC<IndicatorInformationModalProps> = ({
             <TableBody>
               <TableRow>
                 <TableCell>Base Year</TableCell>
-                <TableCell>
-                  {indicatorData?.base_year?.[0] !== undefined
-                    ? indicatorData.base_year[0]
-                    : "N/A"}
-                </TableCell>
+                <TableCell>{indicatorData?.base_year || "N/A"}</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell>Source</TableCell>
-                <TableCell>{indicatorData?.source?.[0] || "N/A"}</TableCell>
+                <TableCell>{indicatorData?.source || "N/A"}</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell>Category</TableCell>
-                <TableCell>{indicatorData?.category?.[0] || "N/A"}</TableCell>
+                <TableCell>{indicatorData?.category || "N/A"}</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell>Seasonally Adjusted</TableCell>
@@ -82,7 +78,7 @@ const IndicatorInformationModal: React.FC<IndicatorInformationModalProps> = ({
               <TableRow>
                 <TableCell>Frequency</TableCell>
                 <TableCell>
-                  {indicatorData?.frequency?.[0] || "N/A"}
+                  {indicatorData?.frequency || "N/A"}
                 </TableCell>
               </TableRow>
               <TableRow>
@@ -97,7 +93,7 @@ const IndicatorInformationModal: React.FC<IndicatorInformationModalProps> = ({
               </TableRow>
               <TableRow>
                 <TableCell>Unit</TableCell>
-                <TableCell>{indicatorData?.unit?.[0] || "N/A"}</TableCell>
+                <TableCell>{indicatorData?.unit || "N/A"}</TableCell>
               </TableRow>
             </TableBody>
             <TableFooter>
